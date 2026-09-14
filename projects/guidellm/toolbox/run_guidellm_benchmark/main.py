@@ -55,11 +55,7 @@ def trim_benchmark_json(obj):
 def _trim_request_entry(obj):
     """Recursively trim bulky text fields from request entries."""
     if isinstance(obj, dict):
-        return {
-            k: _trim_request_entry(v)
-            for k, v in obj.items()
-            if k not in _REQUEST_BULK_FIELDS
-        }
+        return {k: _trim_request_entry(v) for k, v in obj.items() if k not in _REQUEST_BULK_FIELDS}
     elif isinstance(obj, list):
         return [_trim_request_entry(item) for item in obj]
     else:
