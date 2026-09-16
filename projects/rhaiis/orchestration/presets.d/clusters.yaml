@@ -16,14 +16,14 @@ old-zeus:
   benchmarks.guidellm.fs_group: 0
 
 # ── Cluster + accelerator combos ────────────────────────────
-# Usage: /test fournos rhaiis cluster_hera
-#   equivalent to: /test fournos rhaiis nvidia hera
+# Usage: /test fournos rhaiis
+#   /cluster hera
 
 cluster_hera:
-  extends: [nvidia, hera]
+  extends: [nvidia, ci-quick, hera]
 
 cluster_zeus:
-  extends: [nvidia, zeus]
+  extends: [nvidia, ci-quick, zeus]
 
 cluster_old_zeus:
-  extends: [nvidia, old-zeus]
+  extends: [nvidia, ci-quick, old-zeus]
