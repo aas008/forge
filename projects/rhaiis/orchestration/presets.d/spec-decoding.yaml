@@ -1,15 +1,23 @@
 __multiple: true
 
-# DeepSeek-V4-Pro-0813 speculative decoding comparison on H200 Zeus (TP=8).
-# Runs all four workload profiles so they land on the staging dashboard.
+# =============================================================================
+# rhaiis DSpark presets — speculative decoding comparison on H200 (Zeus/Hera)
+# =============================================================================
 #
-# Adaptive verification (enable_adaptive_verification) is omitted: DeepSeek-V4
-# indexer/MLA backends only support the device-side trim + varlen full CUDA
-# graphs on SM100 (B300). H200 (SM90) rejects it at startup.
+# Each model group has: baseline, dspark-static (K=7), dspark-dynamic (K by
+# batch-size bucket). All use vLLM 0.26.0, TP=8, profiles 1-4.
+#
+# Adaptive verification (enable_adaptive_verification) is omitted everywhere:
+# it requires SM100 (B300). H200 (SM90) rejects it at startup.
+#
+# vLLM image override: set rhaiis.engines.vllm.images.nvidia in Fournos UI
+# to vllm/vllm-openai:v0.26.0 (or pass via the base preset below).
 
-deepseek-v4-spec-base:
+# --- Shared base for all DSpark experiments ---
+
+dspark-spec-base:
   rhaiis.accelerator: nvidia
-  rhaiis.cluster_tag: zeus
+  rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.26.0
   rhaiis.engines.vllm.args.gpu-memory-utilization: 0.9
   tests.rhaiis.workload_keys:
     - profile1
@@ -18,26 +26,138 @@ deepseek-v4-spec-base:
     - profile4
   rhaiis.profiler.enabled: true
 
-# 1. No speculative decoding
+# --- DeepSeek-V4-Pro-0813 (TP=8, native MTP + DSpark) ---
+
+deepseek-v4-spec-base:
+  extends:
+    - dspark-spec-base
+  rhaiis.cluster_tag: zeus
+
 deepseek-v4-baseline:
   extends:
     - deepseek-v4-spec-base
   tests.rhaiis.model_key: deepseek-v4-pro-0813
+  tests.rhaiis.version: "vLLM-0.26.0-baseline"
 
-# 2. Native DeepSeek MTP
 deepseek-v4-mtp:
   extends:
     - deepseek-v4-spec-base
   tests.rhaiis.model_key: deepseek-v4-pro-0813-mtp
+  tests.rhaiis.version: "vLLM-0.26.0-mtp"
 
-# 3. DSpark fixed-k (K=7)
 deepseek-v4-dspark:
   extends:
     - deepseek-v4-spec-base
   tests.rhaiis.model_key: deepseek-v4-pro-0813-dspark
+  tests.rhaiis.version: "vLLM-0.26.0-dspark"
 
-# 4. DSpark + dynamic SD (K by concurrency bucket)
 deepseek-v4-dspark-dynamic:
   extends:
     - deepseek-v4-spec-base
   tests.rhaiis.model_key: deepseek-v4-pro-0813-dspark-dynamic
+  tests.rhaiis.version: "vLLM-0.26.0-dspark-dynamic"
+
+# --- GLM-5.2-FP8 (TP=8, RedHatAI DSpark speculator) ---
+
+glm-5-2-spec-base:
+  extends:
+    - dspark-spec-base
+  rhaiis.cluster_tag: zeus
+
+glm-5-2-baseline:
+  extends:
+    - glm-5-2-spec-base
+  tests.rhaiis.model_key: glm-5-2-fp8
+  tests.rhaiis.version: "vLLM-0.26.0-baseline"
+
+glm-5-2-dspark:
+  extends:
+    - glm-5-2-spec-base
+  tests.rhaiis.model_key: glm-5-2-fp8-dspark
+  tests.rhaiis.version: "vLLM-0.26.0-dspark"
+
+glm-5-2-dspark-dynamic:
+  extends:
+    - glm-5-2-spec-base
+  tests.rhaiis.model_key: glm-5-2-fp8-dspark-dynamic
+  tests.rhaiis.version: "vLLM-0.26.0-dspark-dynamic"
+
+# --- Qwen3.6-35B-A3B (TP=8, RedHatAI DSpark speculator) ---
+
+qwen3-6-spec-base:
+  extends:
+    - dspark-spec-base
+  rhaiis.cluster_tag: zeus
+
+qwen3-6-baseline:
+  extends:
+    - qwen3-6-spec-base
+  tests.rhaiis.model_key: qwen3-6-35b-a3b
+  tests.rhaiis.version: "vLLM-0.26.0-baseline"
+
+qwen3-6-dspark:
+  extends:
+    - qwen3-6-spec-base
+  tests.rhaiis.model_key: qwen3-6-35b-a3b-dspark
+  tests.rhaiis.version: "vLLM-0.26.0-dspark"
+
+qwen3-6-dspark-dynamic:
+  extends:
+    - qwen3-6-spec-base
+  tests.rhaiis.model_key: qwen3-6-35b-a3b-dspark-dynamic
+  tests.rhaiis.version: "vLLM-0.26.0-dspark-dynamic"
+
+# --- Kimi-K3 (TP=8, community DSpark speculator, B200 target) ---
+# Kimi-K3 uses MLA attention. The RadixArk speculator is community-trained.
+# Forge cannot target B200 directly — these presets are for H200 testing.
+# For B200 production runs, use Model Furnace bos2 controller.
+
+kimi-k3-spec-base:
+  extends:
+    - dspark-spec-base
+  rhaiis.cluster_tag: zeus
+
+kimi-k3-baseline:
+  extends:
+    - kimi-k3-spec-base
+  tests.rhaiis.model_key: kimi-k3
+  tests.rhaiis.version: "vLLM-0.26.0-baseline"
+
+kimi-k3-dspark:
+  extends:
+    - kimi-k3-spec-base
+  tests.rhaiis.model_key: kimi-k3-dspark
+  tests.rhaiis.version: "vLLM-0.26.0-dspark"
+
+kimi-k3-dspark-dynamic:
+  extends:
+    - kimi-k3-spec-base
+  tests.rhaiis.model_key: kimi-k3-dspark-dynamic
+  tests.rhaiis.version: "vLLM-0.26.0-dspark-dynamic"
+
+# --- GLM-5.2-NVFP4 (TP=8, B200 target) ---
+# NVFP4 on H200 uses software dequant — only run on B200 for real results.
+# These presets exist for completeness; prefer bos2 Model Furnace for B200.
+
+glm-5-2-nvfp4-spec-base:
+  extends:
+    - dspark-spec-base
+  rhaiis.cluster_tag: zeus
+
+glm-5-2-nvfp4-baseline:
+  extends:
+    - glm-5-2-nvfp4-spec-base
+  tests.rhaiis.model_key: glm-5-2-nvfp4
+  tests.rhaiis.version: "vLLM-0.26.0-nvfp4-baseline"
+
+glm-5-2-nvfp4-dspark:
+  extends:
+    - glm-5-2-nvfp4-spec-base
+  tests.rhaiis.model_key: glm-5-2-nvfp4-dspark
+  tests.rhaiis.version: "vLLM-0.26.0-nvfp4-dspark"
+
+glm-5-2-nvfp4-dspark-dynamic:
+  extends:
+    - glm-5-2-nvfp4-spec-base
+  tests.rhaiis.model_key: glm-5-2-nvfp4-dspark-dynamic
+  tests.rhaiis.version: "vLLM-0.26.0-nvfp4-dspark-dynamic"

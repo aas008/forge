@@ -261,6 +261,110 @@ deepseek-v4-pro-0813-dspark-dynamic:
     <<: *deepseek-v4-pro-0813-args
     speculative-config: '{"method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic","num_speculative_tokens_per_batch_size":[[1,64,7],[65,128,5],[129,512,0]]}'
 
+# GLM-5.2 (MoE, ~40B active)
+glm-5-2-fp8: &glm-5-2-fp8
+  name: GLM-5.2-FP8
+  hf_model_id: zai-org/GLM-5.2-FP8
+  engine_args: &glm-5-2-fp8-args
+    tensor-parallel-size: 8
+    kv-cache-dtype: fp8
+    max-model-len: 16384
+    max-num-seqs: 256
+    max-num-batched-tokens: 16384
+    gpu-memory-utilization: 0.9
+    trust-remote-code: true
+
+glm-5-2-fp8-dspark:
+  <<: *glm-5-2-fp8
+  name: GLM-5.2-FP8-DSpark
+  engine_args:
+    <<: *glm-5-2-fp8-args
+    speculative-config: '{"model":"RedHatAI/GLM-5.2-speculator.dspark-preview","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic"}'
+
+glm-5-2-fp8-dspark-dynamic:
+  <<: *glm-5-2-fp8
+  name: GLM-5.2-FP8-DSpark-Dynamic
+  engine_args:
+    <<: *glm-5-2-fp8-args
+    speculative-config: '{"model":"RedHatAI/GLM-5.2-speculator.dspark-preview","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic","num_speculative_tokens_per_batch_size":[[1,64,7],[65,128,5],[129,512,0]]}'
+
+# GLM-5.2 NVFP4 (B200 only — software dequant on H200)
+glm-5-2-nvfp4: &glm-5-2-nvfp4
+  name: GLM-5.2-NVFP4
+  hf_model_id: nvidia/GLM-5.2-NVFP4
+  engine_args: &glm-5-2-nvfp4-args
+    tensor-parallel-size: 8
+    max-model-len: 16384
+    max-num-seqs: 256
+    max-num-batched-tokens: 16384
+    gpu-memory-utilization: 0.9
+    trust-remote-code: true
+
+glm-5-2-nvfp4-dspark:
+  <<: *glm-5-2-nvfp4
+  name: GLM-5.2-NVFP4-DSpark
+  engine_args:
+    <<: *glm-5-2-nvfp4-args
+    speculative-config: '{"model":"RedHatAI/GLM-5.2-speculator.dspark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic"}'
+
+glm-5-2-nvfp4-dspark-dynamic:
+  <<: *glm-5-2-nvfp4
+  name: GLM-5.2-NVFP4-DSpark-Dynamic
+  engine_args:
+    <<: *glm-5-2-nvfp4-args
+    speculative-config: '{"model":"RedHatAI/GLM-5.2-speculator.dspark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic","num_speculative_tokens_per_batch_size":[[1,64,7],[65,128,5],[129,512,0]]}'
+
+# Qwen3.6-35B-A3B (MoE, ~3B active)
+qwen3-6-35b-a3b: &qwen3-6-35b-a3b
+  name: Qwen3.6-35B-A3B
+  hf_model_id: Qwen/Qwen3.6-35B-A3B
+  engine_args: &qwen3-6-35b-a3b-args
+    tensor-parallel-size: 8
+    max-model-len: 16384
+    max-num-seqs: 256
+    max-num-batched-tokens: 16384
+    gpu-memory-utilization: 0.9
+
+qwen3-6-35b-a3b-dspark:
+  <<: *qwen3-6-35b-a3b
+  name: Qwen3.6-35B-A3B-DSpark
+  engine_args:
+    <<: *qwen3-6-35b-a3b-args
+    speculative-config: '{"model":"RedHatAI/Qwen3.6-35B-A3B-speculator.dspark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic"}'
+
+qwen3-6-35b-a3b-dspark-dynamic:
+  <<: *qwen3-6-35b-a3b
+  name: Qwen3.6-35B-A3B-DSpark-Dynamic
+  engine_args:
+    <<: *qwen3-6-35b-a3b-args
+    speculative-config: '{"model":"RedHatAI/Qwen3.6-35B-A3B-speculator.dspark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic","num_speculative_tokens_per_batch_size":[[1,64,7],[65,128,5],[129,512,0]]}'
+
+# Kimi-K3 (MLA, B200 target — community DSpark speculator)
+kimi-k3: &kimi-k3
+  name: Kimi-K3
+  hf_model_id: moonshotai/Kimi-K3
+  engine_args: &kimi-k3-args
+    tensor-parallel-size: 8
+    max-model-len: 16384
+    max-num-seqs: 256
+    max-num-batched-tokens: 16384
+    gpu-memory-utilization: 0.9
+    trust-remote-code: true
+
+kimi-k3-dspark:
+  <<: *kimi-k3
+  name: Kimi-K3-DSpark
+  engine_args:
+    <<: *kimi-k3-args
+    speculative-config: '{"model":"RadixArk/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic"}'
+
+kimi-k3-dspark-dynamic:
+  <<: *kimi-k3
+  name: Kimi-K3-DSpark-Dynamic
+  engine_args:
+    <<: *kimi-k3-args
+    speculative-config: '{"model":"RadixArk/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic","num_speculative_tokens_per_batch_size":[[1,64,7],[65,128,5],[129,512,0]]}'
+
 deepseek-r1-0528:
   name: DeepSeek-R1-0528
   hf_model_id: deepseek-ai/DeepSeek-R1-0528
