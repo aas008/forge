@@ -10,7 +10,7 @@ RHAIIS_FIELDNAMES = [
     "version",
     "prompt toks",
     "output toks",
-    "turn",
+    "turn_index",
     "turns",
     "TP",
     "measured concurrency",
