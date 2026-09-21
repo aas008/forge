@@ -370,11 +370,13 @@ def _percentile(sorted_vals: list[float], p: float) -> float | None:
 
 def _extract_per_turn_curves(
     benchmarks: list[dict[str, Any]],
-) -> dict[int, dict[str, list]]:
+) -> dict[str, dict[str, list]]:
     """Compute per-turn metric curves from individual request records.
 
-    Returns ``{turn_index: {curve_key: [value_per_benchmark_point]}}``
-    when multiple turns exist, otherwise an empty dict.
+    Returns ``{"0": {curve_key: [value_per_benchmark_point]}, ...}``
+    when multiple turns exist, otherwise an empty dict.  Keys are
+    stringified integers so they survive JSON round-trips through the
+    caliper cache.
     """
     all_turns: set[int] = set()
     for bench in benchmarks:
@@ -386,7 +388,7 @@ def _extract_per_turn_curves(
     if len(all_turns) <= 1:
         return {}
 
-    per_turn: dict[int, dict[str, list]] = {}
+    per_turn: dict[str, dict[str, list]] = {}
     for turn_idx in sorted(all_turns):
         curves: dict[str, list] = {curve_key: [] for _, curve_key, _, _, _ in DASHBOARD_METRICS}
         for bench in benchmarks:
@@ -408,7 +410,7 @@ def _extract_per_turn_curves(
             for key in curves:
                 curves[key].append(values.get(key))
 
-        per_turn[turn_idx] = curves
+        per_turn[str(turn_idx)] = curves
 
     return per_turn
 
@@ -572,7 +574,7 @@ def compute_dashboard_kpis(model: UnifiedRunModel, *, prefix: str) -> list[KpiRe
 
         per_turn_data = record.metrics.get("per_turn_curves", {})
         if per_turn_data:
-            for turn_idx, turn_curves in sorted(per_turn_data.items()):
+            for turn_idx, turn_curves in sorted(per_turn_data.items(), key=lambda x: int(x[0])):
                 turn_labels = {**labels}
                 turn_labels.update(metadata_labels)
                 turn_labels["turn"] = str(turn_idx)
