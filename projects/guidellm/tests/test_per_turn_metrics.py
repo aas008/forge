@@ -159,6 +159,43 @@ class TestExtractPerTurnCurves:
         assert turn1_ttft[0] is not None
         assert turn1_ttft[1] is None
 
+    def test_errored_requests_counted(self):
+        benchmarks = [
+            {
+                "requests": {
+                    "successful": [
+                        self._make_request(0, ttft=60.0),
+                        self._make_request(1, ttft=70.0),
+                    ],
+                    "errored": [
+                        {"info": {"turn_index": 1, "conversation_id": "conv2"}},
+                    ],
+                },
+                "config": {"strategy": {"streams": 1}},
+            }
+        ]
+        result = _extract_per_turn_curves(benchmarks)
+        assert result["0"]["errored_requests"] == [0]
+        assert result["1"]["errored_requests"] == [1]
+
+    def test_errored_only_turn_discovered(self):
+        benchmarks = [
+            {
+                "requests": {
+                    "successful": [self._make_request(0, ttft=50.0)],
+                    "errored": [
+                        {"info": {"turn_index": 1, "conversation_id": "conv1"}},
+                    ],
+                },
+                "config": {"strategy": {"streams": 1}},
+            }
+        ]
+        result = _extract_per_turn_curves(benchmarks)
+        assert "0" in result
+        assert "1" in result
+        assert result["1"]["successful_requests"] == [0]
+        assert result["1"]["errored_requests"] == [1]
+
 
 class TestTurnMetricValues:
     @staticmethod
@@ -198,6 +235,12 @@ class TestTurnMetricValues:
         assert result["request_latency_median"] == 2.0
         assert result["request_latency_min"] == 2.0
         assert result["request_latency_max"] == 2.0
+
+    def test_errored_count_propagated(self):
+        reqs = [self._make_req(ttft=100.0)]
+        result = _turn_metric_values(reqs, {"streams": 1}, errored_count=3)
+        assert result["errored_requests"] == 3
+        assert result["successful_requests"] == 1
 
     def test_none_fields_skipped(self):
         reqs = [

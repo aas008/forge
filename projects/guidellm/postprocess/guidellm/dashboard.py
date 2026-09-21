@@ -380,10 +380,11 @@ def _extract_per_turn_curves(
     """
     all_turns: set[int] = set()
     for bench in benchmarks:
-        for req in bench.get("requests", {}).get("successful", []):
-            ti = req.get("info", {}).get("turn_index")
-            if ti is not None:
-                all_turns.add(ti)
+        for bucket in ("successful", "errored"):
+            for req in bench.get("requests", {}).get(bucket, []):
+                ti = req.get("info", {}).get("turn_index")
+                if ti is not None:
+                    all_turns.add(ti)
 
     if len(all_turns) <= 1:
         return {}
@@ -397,16 +398,23 @@ def _extract_per_turn_curves(
                 for r in bench.get("requests", {}).get("successful", [])
                 if r.get("info", {}).get("turn_index") == turn_idx
             ]
+            errored = len(
+                [
+                    r
+                    for r in bench.get("requests", {}).get("errored", [])
+                    if r.get("info", {}).get("turn_index") == turn_idx
+                ]
+            )
             strategy = bench.get("config", {}).get("strategy", {}) or bench.get(
                 "scheduler", {}
             ).get("strategy", {})
 
-            if not reqs:
+            if not reqs and not errored:
                 for key in curves:
                     curves[key].append(None)
                 continue
 
-            values = _turn_metric_values(reqs, strategy)
+            values = _turn_metric_values(reqs, strategy, errored_count=errored)
             for key in curves:
                 curves[key].append(values.get(key))
 
@@ -415,7 +423,9 @@ def _extract_per_turn_curves(
     return per_turn
 
 
-def _turn_metric_values(reqs: list[dict[str, Any]], strategy: dict) -> dict[str, Any]:
+def _turn_metric_values(
+    reqs: list[dict[str, Any]], strategy: dict, *, errored_count: int = 0
+) -> dict[str, Any]:
     """Compute dashboard metric values from individual requests for one turn."""
 
     def _sorted_field(field: str) -> list[float]:
@@ -446,7 +456,7 @@ def _turn_metric_values(reqs: list[dict[str, Any]], strategy: dict) -> dict[str,
         "measured_rps": None,
         "intended_concurrency": strategy.get("streams", strategy.get("max_concurrency")),
         "successful_requests": len(reqs),
-        "errored_requests": 0,
+        "errored_requests": errored_count,
         "ttft_median": _milliseconds_to_seconds(_median(ttft)),
         "ttft_p95": _milliseconds_to_seconds(_percentile(ttft, 95)),
         "ttft_p99": _milliseconds_to_seconds(_percentile(ttft, 99)),
