@@ -52,6 +52,7 @@ RHAIIS_FIELDNAMES = [
     "dataset",
     "spec_decoding",
     "prefix_caching",
+    "turn",
     "turns",
     "prefix_tokens",
     "prefix_count",
