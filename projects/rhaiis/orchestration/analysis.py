@@ -47,9 +47,15 @@ def run_standalone_analysis(
         logger.warning("AWS credentials not available, skipping standalone analysis")
         return
 
-    accelerator = (
+    raw_accel = (
         accelerator_key.split("_")[0].upper() if "_" in accelerator_key else accelerator_key.upper()
     )
+    # Allow clusters to override the CSV accelerator label independently of
+    # the scheduling gpu_type (e.g. janus uses gpu_type=nvidia but its H200
+    # data is stored under accelerator=H200 in the dashboard CSV).
+    from projects.core.library import config as _accel_cfg  # noqa: PLC0415
+    csv_accelerator = _accel_cfg.project.get_config("rhaiis.csv_accelerator", "")
+    accelerator = csv_accelerator.upper() if csv_accelerator else raw_accel
 
     consolidated_path = None
     current_csv_path = None
