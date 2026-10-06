@@ -135,33 +135,38 @@ def request_agent_analysis(
     if agent_model:
         body["model"] = agent_model
 
-    logger.info("Requesting agent analysis for job %s", job_id)
+    logger.info("Requesting agent analysis for job %s\nPrompt:\n%s", job_id, prompt)
 
-    try:
-        req = Request(
-            url,
-            data=json.dumps(body).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "text/event-stream",
-            },
-        )
-        resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS, context=_SSL_CTX)  # noqa: S310
-        ai_content = _collect_response(resp)
+    for attempt in range(1, 4):
+        try:
+            # Use a unique session key per attempt so agent memory doesn't carry over failed state
+            attempt_session = f"{session_key}-a{attempt}" if attempt > 1 else session_key
+            body["thread_id"] = attempt_session
+            body["session_id"] = attempt_session
 
-        if ai_content:
-            logger.info("Agent analysis received for job %s (%d chars)", job_id, len(ai_content))
-        else:
-            logger.warning("Agent returned empty response for job %s", job_id)
+            req = Request(
+                url,
+                data=json.dumps(body).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "text/event-stream",
+                },
+            )
+            resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS, context=_SSL_CTX)  # noqa: S310
+            ai_content = _collect_response(resp)
 
-        return ai_content
+            if ai_content:
+                logger.info("Agent analysis received for job %s (%d chars)", job_id, len(ai_content))
+                return ai_content
 
-    except (URLError, OSError) as e:
-        logger.error("Agent request failed for job %s: %s", job_id, e)
-        return None
-    except Exception as e:
-        logger.error("Unexpected error during agent analysis for job %s: %s", job_id, e)
-        return None
+            logger.warning("Agent returned empty response for job %s (attempt %d/3)", job_id, attempt)
+
+        except (URLError, OSError) as e:
+            logger.error("Agent request failed for job %s (attempt %d/3): %s", job_id, attempt, e)
+        except Exception as e:
+            logger.error("Unexpected error during agent analysis for job %s (attempt %d/3): %s", job_id, attempt, e)
+
+    return None
 
 
 def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = "") -> str | None:
