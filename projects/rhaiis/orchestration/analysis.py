@@ -247,6 +247,7 @@ def run_agent_analysis(
 
     agent_cfg = config.project.get_config("rhaiis.agent_analysis", {})
     agent_url = agent_cfg.get("url", "")
+    agent_model = agent_cfg.get("model", "claude-opus-4-6")
     if not agent_url:
         logger.warning("Agent analysis enabled but no URL configured (rhaiis.agent_analysis.url)")
         return ""
@@ -277,6 +278,7 @@ def run_agent_analysis(
         job_id=run_uuid,
         improvements=improvements if improvements else None,
         agent_url=agent_url,
+        agent_model=agent_model,
     )
     if not agent_response:
         return ""
