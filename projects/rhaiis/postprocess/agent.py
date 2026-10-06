@@ -166,7 +166,7 @@ def request_agent_analysis(
         return None
 
 
-def send_followup(message: str, job_id: str, agent_url: str) -> str | None:
+def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = "claude-opus-4-6") -> str | None:
     """Send a followup message to the agent on an existing session.
 
     Reuses the same thread_id/session_id as request_agent_analysis so the

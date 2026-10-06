@@ -282,7 +282,7 @@ def run_agent_analysis(
         return ""
 
     pr_prompt = build_pr_followup_prompt(current_version, compare_version)
-    pr_analysis = send_followup(message=pr_prompt, job_id=run_uuid, agent_url=agent_url)
+    pr_analysis = send_followup(message=pr_prompt, job_id=run_uuid, agent_url=agent_url, agent_model=agent_model)
     if pr_analysis:
         agent_response = f"{agent_response}\n\n---\n\n## Related Pull Requests\n\n{pr_analysis}"
 
