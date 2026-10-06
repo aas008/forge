@@ -109,7 +109,7 @@ def request_agent_analysis(
     agent_url: str,
     job_id: str = "",
     improvements: list | None = None,
-    agent_model: str = "claude-opus-4-6",
+    agent_model: str = "",
 ) -> str | None:
     """Send regression context to the PSAP agent and return its analysis.
 
@@ -134,8 +134,9 @@ def request_agent_analysis(
         "session_id": session_key,
         "user_id": "forge-rhaiis",
         "stream_tokens": False,
-        "model": agent_model,
     }
+    if agent_model:
+        body["model"] = agent_model
 
     logger.info("Requesting agent analysis for job %s", job_id)
 
@@ -166,7 +167,7 @@ def request_agent_analysis(
         return None
 
 
-def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = "claude-opus-4-6") -> str | None:
+def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = "") -> str | None:
     """Send a followup message to the agent on an existing session.
 
     Reuses the same thread_id/session_id as request_agent_analysis so the
@@ -183,8 +184,9 @@ def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = 
         "session_id": session_key,
         "user_id": "forge-rhaiis",
         "stream_tokens": False,
-        "model": agent_model,
     }
+    if agent_model:
+        body["model"] = agent_model
 
     logger.info("Sending agent followup for job %s", job_id)
 
