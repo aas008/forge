@@ -246,6 +246,10 @@ def _collect_response(resp) -> str | None:
         event_type = event.get("type")
         content = event.get("content")
 
+        if event_type == "error":
+            msg = content.get("message", "") if isinstance(content, dict) else str(content)
+            logger.warning("Agent returned error event: %s", msg)
+            return None
         if event_type == "token" and isinstance(content, str):
             collected_tokens.append(content)
         elif (
