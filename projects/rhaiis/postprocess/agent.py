@@ -6,10 +6,15 @@ streamed AI response into a markdown string. Ported from model-furnace.
 
 import json
 import logging
+import ssl
 import uuid
 from datetime import UTC
 from urllib.error import URLError
 from urllib.request import Request, urlopen
+
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.check_hostname = False
+_SSL_CTX.verify_mode = ssl.CERT_NONE
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +34,7 @@ def check_agent_connectivity(agent_url: str) -> tuple[bool, str]:
 
     try:
         req = Request(health_url, method="GET")
-        resp = urlopen(req, timeout=AGENT_HEALTH_TIMEOUT)  # noqa: S310
+        resp = urlopen(req, timeout=AGENT_HEALTH_TIMEOUT, context=_SSL_CTX)  # noqa: S310
         status = resp.getcode()
         if status and status < 400:
             return True, f"Agent reachable at {health_url} (HTTP {status})"
@@ -149,7 +154,7 @@ def request_agent_analysis(
                 "Accept": "text/event-stream",
             },
         )
-        resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS)  # noqa: S310
+        resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS, context=_SSL_CTX)  # noqa: S310
         ai_content = _collect_response(resp)
 
         if ai_content:
@@ -199,7 +204,7 @@ def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = 
                 "Accept": "text/event-stream",
             },
         )
-        resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS)  # noqa: S310
+        resp = urlopen(req, timeout=AGENT_TIMEOUT_SECONDS, context=_SSL_CTX)  # noqa: S310
         ai_content = _collect_response(resp)
 
         if ai_content:
