@@ -36,6 +36,8 @@ athena-fire:
 
 janus:
   rhaiis.cluster_tag: "janus"
+  rhaiis.gpu_types.nvidia: "nvidia"
+  rhaiis.csv_accelerator: "H200"
   rhaiis.deploy.image_pull_secrets: ["npalaska-image-pull"]
   benchmarks.guidellm.fs_group: 0
 

@@ -47,9 +47,15 @@ def run_standalone_analysis(
         logger.warning("AWS credentials not available, skipping standalone analysis")
         return
 
-    accelerator = (
+    raw_accel = (
         accelerator_key.split("_")[0].upper() if "_" in accelerator_key else accelerator_key.upper()
     )
+    # Use csv_accelerator if set — allows clusters that override gpu_types for
+    # scheduling (e.g. janus: gpu_types.nvidia=nvidia) to still look up the
+    # correct hardware label in the dashboard CSV (e.g. H200).
+    from projects.core.library import config as _accel_cfg  # noqa: PLC0415
+    csv_accelerator = _accel_cfg.project.get_config("rhaiis.csv_accelerator", "")
+    accelerator = csv_accelerator.upper() if csv_accelerator else raw_accel
 
     consolidated_path = None
     current_csv_path = None
