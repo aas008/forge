@@ -253,9 +253,11 @@ def run_agent_analysis(
         return ""
 
     threshold = severity_threshold or AGENT_SEVERITY_THRESHOLD
-    severe = [r for r in analysis.get("regressions", []) if abs(r["pct_diff"]) > threshold]
-    if not severe:
-        logger.info("No severe regressions (>%d%%), skipping agent analysis", threshold)
+    severe_regressions = [r for r in analysis.get("regressions", []) if abs(r["pct_diff"]) > threshold]
+    improvements = analysis.get("improvements", [])
+    severe_improvements = [r for r in improvements if abs(r["pct_diff"]) > threshold]
+    if not severe_regressions and not severe_improvements:
+        logger.info("No severe changes (>%d%%), skipping agent analysis", threshold)
         return ""
 
     ok, detail = check_agent_connectivity(agent_url)
@@ -266,7 +268,6 @@ def run_agent_analysis(
     ea = engine_args or {}
     tp = str(ea.get("tensor-parallel-size") or ea.get("tp-size") or ea.get("tp_size") or 1)
     model = model_cfg.get("hf_model_id", "")
-    improvements = analysis.get("improvements", [])
 
     agent_response = request_agent_analysis(
         model=model,
@@ -274,7 +275,7 @@ def run_agent_analysis(
         current_version=current_version,
         compare_version=compare_version,
         tp=tp,
-        severe_regressions=severe,
+        severe_regressions=severe_regressions,
         job_id=run_uuid,
         improvements=improvements if improvements else None,
         agent_url=agent_url,
