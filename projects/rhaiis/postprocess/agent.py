@@ -83,15 +83,11 @@ def _build_prompt(
                 f"- {r['metric']} ({r['profile']}): {direction} {abs(r['pct_diff']):.1f}% "
                 f"({r['baseline']:.2f} -> {r['current']:.2f})"
             )
+    change_type = "improvement" if not severe_regressions else "regression"
     lines.append("")
     lines.append(
-        f"Check if the runtime args differ between {current_version} and {compare_version} "
-        f"for model {model} on {accelerator} with TP={tp}. "
-    )
-    lines.append("")
-    lines.append(
-        "Provide root cause analysis using pytorch profiler traces, vLLM logs, "
-        "and vLLM source code where available."
+        f"What vLLM pull requests or changes between {compare_version} and {current_version} "
+        f"most likely explain this {change_type} for {model} on {accelerator} with TP={tp}?"
     )
     return "\n".join(lines)
 
