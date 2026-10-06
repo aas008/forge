@@ -98,3 +98,4 @@ agent_analysis:
   enabled: false
   severity_threshold: 10
   url: ""
+  model: "claude-opus-4-6"

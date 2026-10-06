@@ -109,6 +109,7 @@ def request_agent_analysis(
     agent_url: str,
     job_id: str = "",
     improvements: list | None = None,
+    agent_model: str = "claude-opus-4-6",
 ) -> str | None:
     """Send regression context to the PSAP agent and return its analysis.
 
@@ -133,7 +134,7 @@ def request_agent_analysis(
         "session_id": session_key,
         "user_id": "forge-rhaiis",
         "stream_tokens": False,
-        "model": "claude-opus-4-6",
+        "model": agent_model,
     }
 
     logger.info("Requesting agent analysis for job %s", job_id)
@@ -182,7 +183,7 @@ def send_followup(message: str, job_id: str, agent_url: str) -> str | None:
         "session_id": session_key,
         "user_id": "forge-rhaiis",
         "stream_tokens": False,
-        "model": "claude-opus-4-6",
+        "model": agent_model,
     }
 
     logger.info("Sending agent followup for job %s", job_id)
