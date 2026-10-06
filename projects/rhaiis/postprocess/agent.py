@@ -223,6 +223,7 @@ def _collect_response(resp) -> str | None:
     """Read the NDJSON stream and extract the final AI message content."""
     collected_tokens = []
     final_message = None
+    seen_steps: list[str] = []
 
     for raw_line in resp:
         line = raw_line.decode("utf-8", errors="replace").strip()
@@ -236,9 +237,13 @@ def _collect_response(resp) -> str | None:
         event_type = event.get("type")
         content = event.get("content")
 
-        if event_type == "error":
+        if event_type == "status":
+            step = content.get("step", "") if isinstance(content, dict) else ""
+            seen_steps.append(step)
+            logger.debug("Agent status: %s", step)
+        elif event_type == "error":
             msg = content.get("message", "") if isinstance(content, dict) else str(content)
-            logger.warning("Agent returned error event: %s", msg)
+            logger.warning("Agent returned error event after steps [%s]: %s", ",".join(seen_steps), msg)
             return None
         if event_type == "token" and isinstance(content, str):
             collected_tokens.append(content)
