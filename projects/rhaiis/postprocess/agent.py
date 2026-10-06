@@ -55,18 +55,25 @@ def _build_prompt(
     improvements: list | None = None,
 ) -> str:
     """Build a natural-language prompt for the agent from regression context."""
-    lines = [
-        f"Analyze the performance regression between {current_version} and {compare_version} "
-        f"for model {model} on {accelerator} with TP={tp}.",
-        "",
-        "The following metrics regressed significantly (>10%):",
-    ]
-    for r in severe_regressions:
-        direction = "dropped" if r["pct_diff"] < 0 else "increased"
-        lines.append(
-            f"- {r['metric']} ({r['profile']}): {direction} {abs(r['pct_diff']):.1f}% "
-            f"({r['baseline']:.2f} -> {r['current']:.2f})"
+    if severe_regressions:
+        intro = (
+            f"Analyze the performance changes between {current_version} and {compare_version} "
+            f"for model {model} on {accelerator} with TP={tp}."
         )
+    else:
+        intro = (
+            f"Analyze the performance improvements between {current_version} and {compare_version} "
+            f"for model {model} on {accelerator} with TP={tp}."
+        )
+    lines = [intro, ""]
+    if severe_regressions:
+        lines.append("The following metrics regressed significantly (>10%):")
+        for r in severe_regressions:
+            direction = "dropped" if r["pct_diff"] < 0 else "increased"
+            lines.append(
+                f"- {r['metric']} ({r['profile']}): {direction} {abs(r['pct_diff']):.1f}% "
+                f"({r['baseline']:.2f} -> {r['current']:.2f})"
+            )
     if improvements:
         lines.append("")
         lines.append("The following metrics improved significantly:")
