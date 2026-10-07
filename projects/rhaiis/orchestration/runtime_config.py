@@ -48,6 +48,22 @@ def get_gpu_type(accelerator: str) -> str | None:
     return None
 
 
+def apply_hardware_spec(hardware_spec: dict, tp_size: int, gpu_type: str | None) -> dict:
+    if not gpu_type:
+        return {}
+
+    if hardware_spec.get("gpuCount") != tp_size:
+        logger.info(
+            "Setting gpuCount=%d (was %s) from tensor-parallel-size",
+            tp_size,
+            hardware_spec.get("gpuCount"),
+        )
+
+    hardware_spec["gpuCount"] = tp_size
+    hardware_spec["gpuType"] = gpu_type
+    return hardware_spec
+
+
 def get_deploy_config() -> dict:
     return dict(config.project.get_config("rhaiis.deploy"))
 

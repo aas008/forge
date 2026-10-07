@@ -94,9 +94,6 @@ def list_vaults() -> list[str]:
 def resolve_hardware_request(hardware_spec: dict) -> dict:
     test_rhaiis.init()
 
-    if hardware_spec.get("gpuType"):
-        return hardware_spec
-
     from projects.core.library import config as _cfg
 
     model_key = runtime_config.get_test_model_key()
@@ -107,15 +104,9 @@ def resolve_hardware_request(hardware_spec: dict) -> dict:
     tp_size = int(ea.get("tensor-parallel-size") or ea.get("tp-size") or ea.get("tp_size") or 1)
 
     accelerator = runtime_config.get_accelerator()
-    gpu_type = runtime_config.get_gpu_type(accelerator)
+    gpu_type = runtime_config.get_gpu_type(accelerator) or hardware_spec.get("gpuType")
 
-    if not gpu_type:
-        return {}
-
-    hardware_spec["gpuCount"] = tp_size
-    hardware_spec["gpuType"] = gpu_type
-
-    return hardware_spec
+    return runtime_config.apply_hardware_spec(hardware_spec, tp_size, gpu_type)
 
 
 @click.group()
