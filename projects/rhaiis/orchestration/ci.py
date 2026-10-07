@@ -103,11 +103,12 @@ def resolve_hardware_request(hardware_spec: dict) -> dict:
     ea = runtime_config.merge_engine_args(engine_defaults, model, {}, engine)
     tp_size = int(ea.get("tensor-parallel-size") or ea.get("tp-size") or ea.get("tp_size") or 1)
     pp_size = int(ea.get("pipeline-parallel-size") or ea.get("pp-size") or ea.get("pp_size") or 1)
+    dp_size = int(ea.get("data-parallel-size") or ea.get("dp-size") or ea.get("dp_size") or 1)
 
     accelerator = runtime_config.get_accelerator()
     gpu_type = runtime_config.get_gpu_type(accelerator) or hardware_spec.get("gpuType")
 
-    return runtime_config.apply_hardware_spec(hardware_spec, tp_size, pp_size, gpu_type)
+    return runtime_config.apply_hardware_spec(hardware_spec, tp_size, pp_size, dp_size, gpu_type)
 
 
 @click.group()

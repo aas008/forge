@@ -49,18 +49,19 @@ def get_gpu_type(accelerator: str) -> str | None:
 
 
 def apply_hardware_spec(
-    hardware_spec: dict, tp_size: int, pp_size: int, gpu_type: str | None
+    hardware_spec: dict, tp_size: int, pp_size: int, dp_size: int, gpu_type: str | None
 ) -> dict:
     if not gpu_type:
         return {}
 
-    gpu_count = tp_size * pp_size
+    gpu_count = tp_size * pp_size * dp_size
     if hardware_spec.get("gpuCount") != gpu_count:
         logger.info(
-            "Setting gpuCount=%d (TP=%d × PP=%d, was %s)",
+            "Setting gpuCount=%d (TP=%d × PP=%d × DP=%d, was %s)",
             gpu_count,
             tp_size,
             pp_size,
+            dp_size,
             hardware_spec.get("gpuCount"),
         )
 
