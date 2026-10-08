@@ -98,5 +98,4 @@ profiler:
 agent_analysis:
   enabled: false
   severity_threshold: 10
-  url: ""
-  model: ""
+  model: gemini-3.8-flash
