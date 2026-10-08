@@ -130,7 +130,7 @@ def request_agent_analysis(
         "thread_id": session_key,
         "session_id": session_key,
         "user_id": "forge-rhaiis",
-        "stream_tokens": False,
+        "stream_tokens": True,
     }
     if agent_model:
         body["model"] = agent_model
@@ -185,7 +185,7 @@ def send_followup(message: str, job_id: str, agent_url: str, agent_model: str = 
         "thread_id": session_key,
         "session_id": session_key,
         "user_id": "forge-rhaiis",
-        "stream_tokens": False,
+        "stream_tokens": True,
     }
     if agent_model:
         body["model"] = agent_model
