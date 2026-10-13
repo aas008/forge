@@ -574,6 +574,7 @@ def wait_copy_pod_ready(args, ctx):
     return False  # Retry
 
 
+@retry(attempts=5, delay=30, backoff=2.0, retry_on_exceptions=True)
 @task
 def extract_results(args, ctx):
     """Extract GuideLLM results from copy pod (PVC mode) or sidecar (shared volume mode)"""

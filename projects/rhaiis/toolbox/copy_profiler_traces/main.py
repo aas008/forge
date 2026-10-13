@@ -3,6 +3,7 @@
 from projects.core.dsl import (
     entrypoint,
     execute_tasks,
+    retry,
     shell,
     task,
 )
@@ -52,6 +53,7 @@ def list_trace_files(args, context):
     return f"Found {context.trace_count} rank-0 trace files"
 
 
+@retry(attempts=5, delay=30, backoff=2.0, retry_on_exceptions=True)
 @task
 def copy_traces(args, context):
     traces_dir = args.artifact_dir / "artifacts/traces"
