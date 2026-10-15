@@ -753,6 +753,16 @@ def extract_results_from_sidecar(args, ctx, results_dir: Path):
             }
         )
 
+    # Write the index before signaling the sidecar: once /results/done exists
+    # the sidecar exits, so a failed write could not be retried.
+    write_json(
+        results_dir / "index.json",
+        {
+            "benchmark_name": ctx.benchmark_name,
+            "runs": extracted_files,
+        },
+    )
+
     # Create done file to signal sidecar to exit
     logger.info("Creating done file to signal sidecar to exit...")
     oc(
@@ -766,14 +776,6 @@ def extract_results_from_sidecar(args, ctx, results_dir: Path):
         "touch",
         "/results/done",
         check=True,
-    )
-
-    write_json(
-        results_dir / "index.json",
-        {
-            "benchmark_name": ctx.benchmark_name,
-            "runs": extracted_files,
-        },
     )
 
     return f"Extracted results for {ctx.benchmark_name} from sidecar and signaled completion"
