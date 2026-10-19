@@ -112,6 +112,30 @@ rather than derived from the image tag — labels span upstream engine versions
 analysis matches them exactly against historical dashboard data. The Fournos submit
 form should prefer these pins over its free-text image/version fields.
 
+### Campaign variants
+
+A matrix validated against multiple engine builds per cycle (e.g. the 3.6 cycle runs
+vLLM 0.26/0.28/0.31 plus RHAIIS fast1/fast2 builds on the same model matrix) defines
+the matrix once in the unsuffixed base pipeline — which carries the newest campaign's
+pins — and derives per-campaign variants with YAML anchors and merge keys:
+
+```yaml
+cpt-rhaiis-3.6-h200: &cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 model matrix"
+  ...full matrix + current campaign's pins...
+
+cpt-rhaiis-3.6-h200-vllm0.28:
+  <<: *cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 matrix, vLLM 0.28.0 campaign"
+  rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.28.0
+  tests.rhaiis.version: vLLM-0.28.0
+```
+
+PyYAML resolves anchors and merge keys at load time, so every variant is a complete
+pipeline to the CPT parser — no fournos changes are needed to parse them. Adding a
+new build to validate means adding a variant; when it becomes the current campaign,
+rotate the base pipeline's pins to it.
+
 ## How the Fournos UI Expands a CPT Pipeline
 
 Reference: [fournos PR #117](https://github.com/openshift-psap/fournos/pull/117)

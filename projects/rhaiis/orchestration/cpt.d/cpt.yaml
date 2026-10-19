@@ -135,7 +135,7 @@ cpt-vllm-competitive:
 # ──────────────────────────────────────────────
 # RHAIIS 3.6 release regression — H200
 # ──────────────────────────────────────────────
-cpt-rhaiis-3.6-h200:
+cpt-rhaiis-3.6-h200: &cpt_rhaiis_3_6_h200
   __description: "RHAIIS 3.6 release regression — H200 model matrix"
   __engine: vllm
   rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.31.0
@@ -241,10 +241,35 @@ cpt-rhaiis-3.6-h200:
   tests.rhaiis.slack_notify_always: true
   rhaiis.agent_analysis.enabled: false
 
+# Campaign variants — same H200 matrix, pinned per validated build
+cpt-rhaiis-3.6-h200-vllm0.26:
+  <<: *cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 matrix, vLLM 0.26.0 campaign"
+  rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.26.0
+  tests.rhaiis.version: vLLM-0.26.0
+
+cpt-rhaiis-3.6-h200-vllm0.28:
+  <<: *cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 matrix, vLLM 0.28.0 campaign"
+  rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.28.0
+  tests.rhaiis.version: vLLM-0.28.0
+
+cpt-rhaiis-3.6-h200-fast1:
+  <<: *cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 matrix, RHAIIS 3.6 fast1 build"
+  rhaiis.engines.vllm.images.nvidia: registry.stage.redhat.io/rhaii-fast/vllm-cuda-rhel9:3.6.0-fast.1-1789484859
+  tests.rhaiis.version: RHAIIS-3.6-fast1
+
+cpt-rhaiis-3.6-h200-fast2:
+  <<: *cpt_rhaiis_3_6_h200
+  __description: "RHAIIS 3.6 release regression — H200 matrix, RHAIIS 3.6 fast2 build"
+  rhaiis.engines.vllm.images.nvidia: registry.stage.redhat.io/rhaii-fast/vllm-cuda-rhel9:3.6.0-fast.2-1790710355
+  tests.rhaiis.version: RHAIIS-3.6-fast2
+
 # ──────────────────────────────────────────────
 # RHAIIS 3.6 release regression — B200
 # ──────────────────────────────────────────────
-cpt-rhaiis-3.6-b200:
+cpt-rhaiis-3.6-b200: &cpt_rhaiis_3_6_b200
   __description: "RHAIIS 3.6 release regression — B200 model matrix"
   __engine: vllm
   rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.28.0
@@ -314,10 +339,17 @@ cpt-rhaiis-3.6-b200:
   tests.rhaiis.slack_notify_always: true
   rhaiis.agent_analysis.enabled: false
 
+# Campaign variants — same B200 matrix, pinned per validated build
+cpt-rhaiis-3.6-b200-vllm0.26:
+  <<: *cpt_rhaiis_3_6_b200
+  __description: "RHAIIS 3.6 release regression — B200 matrix, vLLM 0.26.0 campaign"
+  rhaiis.engines.vllm.images.nvidia: vllm/vllm-openai:v0.26.0
+  tests.rhaiis.version: vLLM-0.26.0
+
 # ──────────────────────────────────────────────
 # RHAIIS 3.6 release regression — MI355X
 # ──────────────────────────────────────────────
-cpt-rhaiis-3.6-mi355x:
+cpt-rhaiis-3.6-mi355x: &cpt_rhaiis_3_6_mi355x
   __description: "RHAIIS 3.6 release regression — MI355X model matrix"
   __engine: vllm
   rhaiis.engines.vllm.images.amd: vllm/vllm-openai-rocm:v0.31.0
@@ -402,3 +434,34 @@ cpt-rhaiis-3.6-mi355x:
   caliper.postprocess.csv_dashboard.enabled: true
   tests.rhaiis.slack_notify_always: true
   rhaiis.agent_analysis.enabled: false
+
+# Campaign variants — same MI355X matrix, pinned per validated build
+cpt-rhaiis-3.6-mi355x-vllm0.26:
+  <<: *cpt_rhaiis_3_6_mi355x
+  __description: "RHAIIS 3.6 release regression — MI355X matrix, vLLM 0.26.0 campaign"
+  rhaiis.engines.vllm.images.amd: vllm/vllm-openai-rocm:v0.26.0
+  tests.rhaiis.version: vLLM-0.26.0
+
+cpt-rhaiis-3.6-mi355x-vllm0.28:
+  <<: *cpt_rhaiis_3_6_mi355x
+  __description: "RHAIIS 3.6 release regression — MI355X matrix, vLLM 0.28.0 campaign"
+  rhaiis.engines.vllm.images.amd: vllm/vllm-openai-rocm:v0.28.0
+  tests.rhaiis.version: vLLM-0.28.0
+
+cpt-rhaiis-3.6-mi355x-vllm0.30:
+  <<: *cpt_rhaiis_3_6_mi355x
+  __description: "RHAIIS 3.6 release regression — MI355X matrix, vLLM 0.30.0 campaign"
+  rhaiis.engines.vllm.images.amd: vllm/vllm-openai-rocm:v0.30.0
+  tests.rhaiis.version: vLLM-0.30.0
+
+cpt-rhaiis-3.6-mi355x-fast1:
+  <<: *cpt_rhaiis_3_6_mi355x
+  __description: "RHAIIS 3.6 release regression — MI355X matrix, RHAIIS 3.6 fast1 build"
+  rhaiis.engines.vllm.images.amd: registry.redhat.io/rhaii-fast/vllm-rocm-rhel9:3.6.0-fast.1-1789155375
+  tests.rhaiis.version: RHAIIS-3.6-fast1
+
+cpt-rhaiis-3.6-mi355x-fast2:
+  <<: *cpt_rhaiis_3_6_mi355x
+  __description: "RHAIIS 3.6 release regression — MI355X matrix, RHAIIS 3.6 fast2 build"
+  rhaiis.engines.vllm.images.amd: quay.io/aipcc/rhaiis/rocm-ubi9:3.6.0-fast.2-1790234469
+  tests.rhaiis.version: RHAIIS-3.6-fast2
