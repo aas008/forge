@@ -91,11 +91,26 @@ job in that pipeline. Common ones:
 
 | Key | Purpose |
 |-----|---------|
+| `rhaiis.engines.<engine>.images.<accelerator>` | Pin the inference server image |
+| `tests.rhaiis.version` | Pin the version label (campaign identifier) |
 | `rhaiis.profiler.enabled` | Enable PyTorch profiler |
 | `tests.rhaiis.run_benchmark` | Actually run the GuideLLM benchmark |
 | `caliper.postprocess.csv_dashboard.enabled` | Export results to dashboard CSV |
 | `tests.rhaiis.slack_notify_always` | Send Slack notification regardless of result |
 | `rhaiis.agent_analysis.enabled` | Run AI analysis on results |
+
+### Pinned image and version
+
+Every pipeline should pin the **standard** engine image and an explicit version
+label. Both become part of the pipeline definition instead of per-submission form
+input, making a pipeline a complete, reproducible campaign definition (matrix +
+workloads + image + label). Variant images (e.g. `-cu129` builds) are only pinned
+deliberately when specific hardware requires them. Bumping the pins is the explicit
+action that starts validating a new release. The version label is pinned as-is
+rather than derived from the image tag — labels span upstream engine versions
+(`vLLM-0.31.0`) and RHAIIS product builds (`RHAIIS-3.6-fast1`), and regression
+analysis matches them exactly against historical dashboard data. The Fournos submit
+form should prefer these pins over its free-text image/version fields.
 
 ## How the Fournos UI Expands a CPT Pipeline
 
