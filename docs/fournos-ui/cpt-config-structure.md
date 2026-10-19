@@ -13,9 +13,14 @@ projects/rhaiis/orchestration/cpt.d/cpt.yaml
 
 ```yaml
 __cpt: true
+__multiple: true
 ```
 
-Signals that this file contains CPT pipeline definitions (not regular presets).
+`__cpt` signals that this file contains CPT pipeline definitions. `__multiple`
+follows the forge preset convention (see any `presets.d/*.yaml`), so preset-based
+consumers — e.g. the Control Center submit UI via `presets_ref` — expand the file
+into one pipeline per top-level key instead of treating the whole file as a single
+preset named `cpt`.
 
 ## Pipeline Structure
 
@@ -116,6 +121,10 @@ are not public artifacts, so those pipelines pin **only the version label** and 
 image is supplied at submission time. A pipeline without an image pin must always be
 submitted with an explicit image — the submit form should enforce this.
 
+Pipelines that pin only one accelerator's image (e.g. `images.nvidia`) should also
+set `__accelerator` — the submit UIs use it to constrain the accelerator choice, so
+an unpinned accelerator cannot run a default image under the pinned label.
+
 Precedence note: the submit form currently applies its free-text image/version fields
 *after* the pipeline overrides, so a typed value still wins over a yaml pin. Making
 the form defer to yaml pins — and only prompt for an image when the pipeline has
@@ -197,7 +206,7 @@ spec:
       args: [nvidia, vllm, hera, llama-70b]
       configOverrides:
         tests.rhaiis.workload_keys: [ci-quick, profile1, profile2, profile3, profile4]
-        tests.rhaiis.version: "vLLM-0.24.0-CPT"
+        tests.rhaiis.version: vLLM-0.31.0
         rhaiis.profiler.enabled: true
         ...per-model overrides...
   secretRefs: [psap-forge-dashboard-s3, psap-forge-notifications]
