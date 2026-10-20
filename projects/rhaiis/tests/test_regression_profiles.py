@@ -11,6 +11,7 @@ WORKLOADS_YAML = Path(__file__).parent.parent / "orchestration" / "config.d" / "
 
 
 def _workload_shapes():
+    """Parse the (prompt_tokens, output_tokens) shape of every workload in workloads.yaml."""
     workloads = yaml.safe_load(WORKLOADS_YAML.read_text())
     shapes = {}
     for key, cfg in workloads.items():
@@ -22,6 +23,7 @@ def _workload_shapes():
 
 
 def test_every_workload_shape_is_in_profile_map():
+    """Every workload shape must map to a profile, or its rows are silently excluded."""
     shapes = _workload_shapes()
     assert shapes, "no workload shapes parsed from workloads.yaml"
     missing = {key: shape for key, shape in shapes.items() if shape not in PROFILE_MAP}
@@ -29,6 +31,7 @@ def test_every_workload_shape_is_in_profile_map():
 
 
 def _row(isl, osl, version, conc=25.0, output_tput=100.0):
+    """Build one consolidated-CSV row for the comparator tests."""
     return {
         "model": "test/model",
         "accelerator": "H200",
@@ -46,11 +49,13 @@ def _row(isl, osl, version, conc=25.0, output_tput=100.0):
 
 
 def _write_csv(path, rows):
+    """Write rows to a CSV and return its path."""
     pd.DataFrame(rows).to_csv(path, index=False)
     return str(path)
 
 
 def test_compare_runs_includes_profile6_and_profile7(tmp_path, caplog):
+    """profile6/profile7 rows are compared; unmapped shapes are excluded with a warning."""
     current_csv = _write_csv(
         tmp_path / "current.csv",
         [
@@ -84,6 +89,7 @@ def test_compare_runs_includes_profile6_and_profile7(tmp_path, caplog):
 
 
 def test_compare_runs_respects_restrict_profiles(tmp_path):
+    """restrict_profiles still filters which profiles are compared."""
     current_csv = _write_csv(
         tmp_path / "current.csv",
         [_row(128, 128, "current"), _row(8000, 800, "current")],
