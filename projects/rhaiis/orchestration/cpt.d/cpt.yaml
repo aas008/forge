@@ -207,6 +207,10 @@ cpt-rhaiis-3.6-h200:
       rhaiis.engines.vllm.args.reasoning-parser: deepseek_v4
     google-translategemma/tp1:
       rhaiis.engines.vllm.args.tensor-parallel-size: 1
+      # The checkpoint's chat template only accepts structured
+      # source/target language-code content, so chat-completions requests
+      # are rejected (400); benchmark via raw completions instead.
+      benchmarks.guidellm.args.request_type: /v1/completions
     qwen3-8-27b-int4/tp1:
       rhaiis.engines.vllm.args.tensor-parallel-size: 1
       rhaiis.engines.vllm.args.kv-cache-dtype: fp8
