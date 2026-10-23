@@ -360,7 +360,6 @@ PROFILE_MAP = {
     (512, 2048): "profile2",
     (2048, 128): "profile3",
     (8000, 1000): "profile4",
-    (100000, 1000): "profile5",
     (128, 128): "profile6",
     (8000, 800): "profile7",
 }
