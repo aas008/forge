@@ -216,6 +216,8 @@ def build_guidellm_args(
 ) -> list[str]:
     guidellm_args = []
     for key, value in benchmark_cfg.get("args", {}).items():
+        if value is None:
+            continue
         cli_key = key.replace("_", "-")
         guidellm_args.append(f"--{cli_key}={_format_arg_value(value)}")
 
