@@ -9,6 +9,10 @@ from projects.rhaiis.postprocess.regression import METRICS, PROFILE_MAP, compare
 
 WORKLOADS_YAML = Path(__file__).parent.parent / "orchestration" / "config.d" / "workloads.yaml"
 
+# profile5 rows are not collected for regression comparison, so its shape is
+# intentionally absent from PROFILE_MAP.
+UNCOMPARED_WORKLOADS = {"profile5"}
+
 
 def _workload_shapes():
     """Parse the (prompt_tokens, output_tokens) shape of every workload in workloads.yaml."""
@@ -22,11 +26,15 @@ def _workload_shapes():
     return shapes
 
 
-def test_every_workload_shape_is_in_profile_map():
-    """Every workload shape must map to a profile, or its rows are silently excluded."""
+def test_every_compared_workload_shape_is_in_profile_map():
+    """Every compared workload must map to a profile, or its rows are silently excluded."""
     shapes = _workload_shapes()
     assert shapes, "no workload shapes parsed from workloads.yaml"
-    missing = {key: shape for key, shape in shapes.items() if shape not in PROFILE_MAP}
+    missing = {
+        key: shape
+        for key, shape in shapes.items()
+        if key not in UNCOMPARED_WORKLOADS and shape not in PROFILE_MAP
+    }
     assert not missing, f"workload shapes missing from PROFILE_MAP: {missing}"
 
 
@@ -62,6 +70,8 @@ def test_compare_runs_includes_profile6_and_profile7(tmp_path, caplog):
             _row(128, 128, "current"),
             _row(8000, 800, "current"),
             _row(333, 333, "current"),
+            _row("unknown", "unknown", "current"),
+            _row(float("nan"), float("nan"), "current"),
         ],
     )
     consolidated_csv = _write_csv(

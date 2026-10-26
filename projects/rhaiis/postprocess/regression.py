@@ -180,7 +180,7 @@ def compare_runs(
         unmapped = frame[frame["_profile"].isna()]
         if not unmapped.empty:
             shapes = sorted(
-                {(row["prompt toks"], row["output toks"]) for _, row in unmapped.iterrows()}
+                {f"({row['prompt toks']}, {row['output toks']})" for _, row in unmapped.iterrows()}
             )
             logger.warning(
                 "Excluding %d %s row(s) with ISL/OSL shape(s) %s missing from PROFILE_MAP",
