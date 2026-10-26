@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 import pathlib
 import signal
@@ -52,8 +53,28 @@ def get_deploy_config() -> dict:
     return dict(config.project.get_config("rhaiis.deploy"))
 
 
-def get_benchmark_config() -> dict:
-    return dict(config.project.get_config("benchmarks.guidellm"))
+def _deep_merge(base: object, override: object) -> object:
+    if not isinstance(base, dict) or not isinstance(override, dict):
+        return copy.deepcopy(override)
+
+    merged = copy.deepcopy(base)
+    for key, value in override.items():
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
+def get_benchmark_config(model_key: str | None = None) -> dict:
+    benchmark_cfg = dict(config.project.get_config("benchmarks.guidellm"))
+    if not model_key:
+        return benchmark_cfg
+
+    model_benchmark = get_model(model_key).get("benchmarks", {}).get("guidellm", {})
+    if model_benchmark:
+        benchmark_cfg = _deep_merge(benchmark_cfg, model_benchmark)
+    return benchmark_cfg
 
 
 def get_engine() -> str:
