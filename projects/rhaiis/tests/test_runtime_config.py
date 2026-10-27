@@ -26,7 +26,7 @@ def _install_config(monkeypatch, *, benchmark: dict, model: dict) -> None:
     )
 
 
-def test_get_benchmark_config_merges_model_request_type(monkeypatch) -> None:
+def test_get_benchmark_config_uses_model_default_when_unset(monkeypatch) -> None:
     _install_config(
         monkeypatch,
         benchmark={
@@ -44,6 +44,49 @@ def test_get_benchmark_config_merges_model_request_type(monkeypatch) -> None:
     assert benchmark_cfg["args"]["request_type"] == "/v1/completions"
     assert benchmark_cfg["args"]["backend_type"] == "openai_http"
     assert benchmark_cfg["timeout"] == 14400
+
+
+def test_get_benchmark_config_preserves_explicit_request_type_override(monkeypatch) -> None:
+    _install_config(
+        monkeypatch,
+        benchmark={
+            "args": {"backend_type": "openai_http", "request_type": "/v1/chat/completions"},
+        },
+        model={
+            "hf_model_id": "openai/gpt-oss-120b",
+            "benchmarks": {"guidellm": {"args": {"request_type": "/v1/completions"}}},
+        },
+    )
+
+    benchmark_cfg = runtime_config.get_benchmark_config("test-model")
+
+    assert benchmark_cfg["args"]["request_type"] == "/v1/chat/completions"
+
+
+def test_get_benchmark_config_fills_missing_keys_without_overwriting(monkeypatch) -> None:
+    _install_config(
+        monkeypatch,
+        benchmark={
+            "timeout": 14400,
+            "args": {"backend_type": "openai_http", "request_type": None},
+        },
+        model={
+            "hf_model_id": "openai/gpt-oss-120b",
+            "benchmarks": {
+                "guidellm": {
+                    "timeout": 60,
+                    "args": {"request_type": "/v1/completions", "rate_type": "concurrent"},
+                }
+            },
+        },
+    )
+
+    benchmark_cfg = runtime_config.get_benchmark_config("test-model")
+
+    assert benchmark_cfg["timeout"] == 14400
+    assert benchmark_cfg["args"]["request_type"] == "/v1/completions"
+    assert benchmark_cfg["args"]["rate_type"] == "concurrent"
+    assert benchmark_cfg["args"]["backend_type"] == "openai_http"
 
 
 def test_get_benchmark_config_leaves_global_value_without_model_override(monkeypatch) -> None:
