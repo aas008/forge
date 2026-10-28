@@ -28,17 +28,26 @@ def _optional_phase_workload_keys(
     return [key for key in workload_keys if key not in excluded]
 
 
+def _effective_profiler_enabled(profiler_cfg: dict, workload_keys: list[str], engine: str) -> bool:
+    """Profiler runs only with vLLM and at least one workload eligible for optional phases."""
+    if not profiler_cfg.get("enabled", False) or engine != "vllm":
+        return False
+
+    from projects.core.library import config
+
+    excluded_workloads = config.project.get_config("rhaiis.optional_phase.excluded_workloads", [])
+    return bool(_optional_phase_workload_keys(workload_keys, excluded_workloads))
+
+
 def _standalone_only_analysis(workload_keys: list[str]) -> bool:
     """True when the run only compares existing S3 data (no benchmark, no profiler)."""
     from projects.core.library import config
 
-    run_benchmark = config.project.get_config("tests.rhaiis.run_benchmark", True)
+    if config.project.get_config("tests.rhaiis.run_benchmark", True):
+        return False
+
     profiler_cfg = runtime_config.get_profiler_config()
-    excluded_workloads = config.project.get_config("rhaiis.optional_phase.excluded_workloads", [])
-    profiler_enabled = profiler_cfg.get("enabled", False) and bool(
-        _optional_phase_workload_keys(workload_keys, excluded_workloads)
-    )
-    return not run_benchmark and not profiler_enabled
+    return not _effective_profiler_enabled(profiler_cfg, workload_keys, runtime_config.get_engine())
 
 
 def _write_manifest(manifest: dict, path: Path) -> None:
@@ -62,14 +71,21 @@ def run(
     namespace: str,
     deployment_name: str | None = None,
 ) -> int:
+    run_postprocess = not _standalone_only_analysis(workload_keys)
     ret = run_and_postprocess(
         do_test,
         model_key=model_key,
         workload_keys=workload_keys,
         namespace=namespace,
         deployment_name=deployment_name,
-        run_postprocess=not _standalone_only_analysis(workload_keys),
+        run_postprocess=run_postprocess,
     )
+
+    if not run_postprocess:
+        # no postprocessing ran, so any *__postprocessing directory in the
+        # artifact tree is stale — don't sync it to the consolidated dashboard
+        logger.info("Postprocessing was skipped: not syncing the dashboard CSV")
+        return ret
 
     try:
         _sync_postprocessed_dashboard_csv(model_key, workload_keys)
@@ -194,7 +210,9 @@ def _run_test(
     optional_phase_workload_keys = _optional_phase_workload_keys(
         workload_keys, excluded_optional_phase_workloads
     )
-    profiler_enabled = profiler_requested and bool(optional_phase_workload_keys)
+    profiler_enabled = _effective_profiler_enabled(profiler_cfg, workload_keys, engine)
+    if profiler_requested and engine != "vllm":
+        logger.warning("Profiler is only supported with vLLM engine, skipping profiler")
     skipped_optional_phase_workloads = [
         key for key in workload_keys if key not in optional_phase_workload_keys
     ]
@@ -233,13 +251,10 @@ def _run_test(
             "deployment_uuid": run_uuid,
         }
         profiler_ranges = None
-        if profiler_enabled and engine == "vllm":
+        if profiler_enabled:
             isvc_labels["vllm-profiler/enabled"] = "true"
             profiler_ranges = profiler_cfg["ranges"]
             logger.info("Enabling PyTorch profiler for forward-pass range %s", profiler_ranges)
-        elif profiler_enabled and engine != "vllm":
-            logger.warning("Profiler is only supported with vLLM engine, skipping profiler")
-            profiler_enabled = False
 
         logger.info("Deploying %s to %s/%s", model_cfg["hf_model_id"], namespace, deployment_name)
         ea = engine_args or {}
