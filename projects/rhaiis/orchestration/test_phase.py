@@ -28,6 +28,19 @@ def _optional_phase_workload_keys(
     return [key for key in workload_keys if key not in excluded]
 
 
+def _standalone_only_analysis(workload_keys: list[str]) -> bool:
+    """True when the run only compares existing S3 data (no benchmark, no profiler)."""
+    from projects.core.library import config
+
+    run_benchmark = config.project.get_config("tests.rhaiis.run_benchmark", True)
+    profiler_cfg = runtime_config.get_profiler_config()
+    excluded_workloads = config.project.get_config("rhaiis.optional_phase.excluded_workloads", [])
+    profiler_enabled = profiler_cfg.get("enabled", False) and bool(
+        _optional_phase_workload_keys(workload_keys, excluded_workloads)
+    )
+    return not run_benchmark and not profiler_enabled
+
+
 def _write_manifest(manifest: dict, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -55,6 +68,7 @@ def run(
         workload_keys=workload_keys,
         namespace=namespace,
         deployment_name=deployment_name,
+        run_postprocess=not _standalone_only_analysis(workload_keys),
     )
 
     try:
@@ -663,9 +677,16 @@ def _sync_postprocessed_dashboard_csv(model_key: str, workload_keys: list[str]) 
     else:
         logger.info("Dashboard CSV S3 sync not enabled")
 
-    # Regression check — runs regardless of csv_dashboard.enabled.
+    # Regression check — runs regardless of csv_dashboard.enabled, except for
+    # standalone-only runs, where run_standalone_analysis already owns it.
     version = config.project.get_config("tests.rhaiis.version", "")
     compare_version = config.project.get_config("tests.rhaiis.compare_version", "")
+
+    if not config.project.get_config("tests.rhaiis.run_benchmark", True):
+        logger.info(
+            "run_benchmark=false: standalone analysis owns the regression check, skipping here"
+        )
+        return
 
     if compare_version and version:
         model_cfg = runtime_config.get_model(model_key)
