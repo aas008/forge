@@ -411,6 +411,25 @@ def _run_test(
                 trtllm_config=trtllm_cfg,
             )
 
+        if not run_benchmark:
+            # one comparison for the whole run, not one per workload
+            logger.info(
+                "run_benchmark=false: comparing existing S3 data for workloads %s", workload_keys
+            )
+            try:
+                from projects.rhaiis.orchestration.analysis import run_standalone_analysis
+
+                run_standalone_analysis(
+                    model_cfg,
+                    accelerator_key,
+                    engine_args,
+                    run_uuid=config.project.get_config("ci_job.fjob_name", ""),
+                    restrict_profiles=workload_keys,
+                )
+            except Exception:
+                logger.warning("Standalone analysis failed", exc_info=True)
+                _warnings.append("Standalone analysis failed")
+
         try:
             first_workload = runtime_config.get_workload(workload_keys[0])
             first_rates = first_workload.get("rates", [1])
@@ -510,19 +529,6 @@ def _run_workload_benchmark(
 
         if not run_benchmark:
             logger.info("run_benchmark=false, skipping main benchmark")
-            try:
-                from projects.rhaiis.orchestration.analysis import run_standalone_analysis
-
-                run_standalone_analysis(
-                    model_cfg,
-                    accelerator_key,
-                    engine_args,
-                    run_uuid=config.project.get_config("ci_job.fjob_name", ""),
-                    restrict_profiles=[workload_key],
-                )
-            except Exception:
-                logger.warning("Standalone analysis failed", exc_info=True)
-                _warnings.append(f"Standalone analysis failed for {workload_key}")
         else:
             logger.info("Running benchmark at rates=%s for workload=%s", rates, workload_key)
 
